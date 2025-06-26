@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
-const ResetPasswordPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+interface ResetPasswordPageProps {
+  onBack?: () => void;
+}
+
+const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onBack }) => {
   const { newPassword } = useAuth();
   const [Email, setEmail] = useState('');
   const [Password, setPassword] = useState('');
@@ -29,23 +33,30 @@ const ResetPasswordPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           className="w-full px-3 py-2 border rounded mb-3 bg-white"
           placeholder="Email"
           value={Email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           className="w-full px-3 py-2 border rounded mb-4 bg-white"
           placeholder="New Password"
           value={Password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button
+          type="button"
           className="w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600 mb-2"
           disabled={loading}
           onClick={handleSubmit}
         >
           {loading ? 'Updating...' : 'Update'}
         </button>
-        <button className="text-sm text-blue-500" onClick={onBack}>Back</button>
+        <button
+          type="button"
+          className="text-sm text-blue-500"
+          onClick={onBack}
+        >
+          Back
+        </button>
       </div>
     </div>
   );

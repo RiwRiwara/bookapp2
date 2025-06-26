@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const ForgotPasswordPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { forgotPassword } = useAuth();
@@ -28,7 +28,7 @@ const ForgotPasswordPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           className="w-full px-3 py-2 border rounded mb-4 bg-white"
           placeholder="Email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <button
           className="w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600 mb-2"
@@ -37,7 +37,9 @@ const ForgotPasswordPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         >
           {loading ? 'Submitting...' : 'Send'}
         </button>
-        <button className="text-sm text-blue-500" onClick={onBack}>Back</button>
+        <button className="text-sm text-blue-500" onClick={onBack}>
+          Back
+        </button>
       </div>
     </div>
   );

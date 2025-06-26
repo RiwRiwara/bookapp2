@@ -1,8 +1,12 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
-const RegisterPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+interface RegisterPageProps {
+  onBack?: () => void;
+}
+
+const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
   const { register } = useAuth();
   const [form, setForm] = useState({
     firstName: '',
@@ -46,13 +50,20 @@ const RegisterPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           />
         ))}
         <button
+          type="button"
           className="w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600 mb-2"
           onClick={handleSubmit}
           disabled={loading}
         >
           {loading ? 'Please wait...' : 'Register'}
         </button>
-        <button className="text-sm text-center text-blue-500" onClick={onBack}>Back to login</button>
+        <button
+          type="button"
+          className="text-sm text-center text-blue-500"
+          onClick={onBack}
+        >
+          Back to login
+        </button>
       </div>
     </div>
   );

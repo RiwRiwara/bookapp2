@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { FaHeart } from 'react-icons/fa';
 import bookService, { Book } from '../services/bookService';
 import ReaderPage from './ReaderPage';
-import { FaHeart } from 'react-icons/fa';
 import BookDetailPage from './BookDetailPage';
 
 // Local fallback data while waiting for API (optional)
@@ -30,10 +30,11 @@ const MyListPage: React.FC = () => {
     fetchFavorites();
   }, []);
 
-
   // If currently reading
   if (readingBook) {
-    return <ReaderPage book={readingBook} onBack={() => setReadingBook(null)} />;
+    return (
+      <ReaderPage book={readingBook} onBack={() => setReadingBook(null)} />
+    );
   }
 
   // If a book is selected show detail screen
@@ -48,47 +49,63 @@ const MyListPage: React.FC = () => {
   }
 
   // Separate books into reading and unread categories
-  const readingBooks = books.filter(book => book.readPercent && book.readPercent > 0 && book.readPercent < 100);
-  const unreadBooks = books.filter(book => !book.readPercent || book.readPercent === 0);
+  const readingBooks = books.filter(
+    (book) =>
+      book.readPercent && book.readPercent > 0 && book.readPercent < 100,
+  );
+  const unreadBooks = books.filter(
+    (book) => !book.readPercent || book.readPercent === 0,
+  );
 
-  const BookCard = ({ book }: { book: Book }) => (
-    <div onClick={() => setSelectedBook(book)} className="relative bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer">
-      {/* Heart icon in top-right corner */}
-      <div className="absolute top-2 right-2 z-10">
-        <FaHeart className="text-blue-500" />
-      </div>
+  function BookCard({ book }: { book: Book }) {
+    return (
+      <div
+        onClick={() => setSelectedBook(book)}
+        className="relative bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+      >
+        {/* Heart icon in top-right corner */}
+        <div className="absolute top-2 right-2 z-10">
+          <FaHeart className="text-blue-500" />
+        </div>
 
-      {/* Book cover image that fills the card */}
-      <div className="relative pb-[140%]">
-        <img 
-          src={book.imageUrl && book.imageUrl.trim() !== '' ? book.imageUrl : 'https://placehold.co/200x300?text=book'} 
-          alt={book.bookName} 
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      </div>
-
-      {/* Progress bar for reading books */}
-      {book.readPercent !== undefined && book.readPercent > 0 && (
-        <div className="w-full bg-gray-200 h-1">
-          <div
-            className="bg-blue-500 h-1"
-            style={{ width: `${book.readPercent}%` }}
+        {/* Book cover image that fills the card */}
+        <div className="relative pb-[140%]">
+          <img
+            src={
+              book.imageUrl && book.imageUrl.trim() !== ''
+                ? book.imageUrl
+                : 'https://placehold.co/200x300?text=book'
+            }
+            alt={book.bookName}
+            className="absolute inset-0 w-full h-full object-cover"
           />
         </div>
-      )}
 
-      {/* Book info */}
-      <div className="p-3 bg-white">
-        <h3 className="font-medium text-base truncate">{book.bookName}</h3>
-        <p className="text-xs text-gray-600 truncate">{book.artist}</p>
-
-        {/* Reading progress text */}
+        {/* Progress bar for reading books */}
         {book.readPercent !== undefined && book.readPercent > 0 && (
-          <p className="text-xs text-blue-500 mt-1">อ่านแล้ว {book.readPercent}%</p>
+          <div className="w-full bg-gray-200 h-1">
+            <div
+              className="bg-blue-500 h-1"
+              style={{ width: `${book.readPercent}%` }}
+            />
+          </div>
         )}
+
+        {/* Book info */}
+        <div className="p-3 bg-white">
+          <h3 className="font-medium text-base truncate">{book.bookName}</h3>
+          <p className="text-xs text-gray-600 truncate">{book.artist}</p>
+
+          {/* Reading progress text */}
+          {book.readPercent !== undefined && book.readPercent > 0 && (
+            <p className="text-xs text-blue-500 mt-1">
+              อ่านแล้ว {book.readPercent}%
+            </p>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="flex-1 p-6 md:p-8 max-w-7xl mx-auto">
@@ -105,7 +122,9 @@ const MyListPage: React.FC = () => {
           {/* Reading section */}
           {readingBooks.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4 text-blue-600">กำลังอ่าน ({readingBooks.length})</h3>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">
+                กำลังอ่าน ({readingBooks.length})
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {readingBooks.map((book) => (
                   <BookCard key={book.bookId} book={book} />
@@ -117,7 +136,9 @@ const MyListPage: React.FC = () => {
           {/* Unread books section */}
           {unreadBooks.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-700">ยังไม่ได้อ่าน ({unreadBooks.length})</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">
+                ยังไม่ได้อ่าน ({unreadBooks.length})
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {unreadBooks.map((book) => (
                   <BookCard key={book.bookId} book={book} />

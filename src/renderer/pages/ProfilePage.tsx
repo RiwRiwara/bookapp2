@@ -11,12 +11,13 @@ const ProfilePage: React.FC = () => {
           <span className="material-icons">person</span>
         </div>
         <div className="w-full max-w-md">
-          <label className="block text-left text-sm font-medium mb-1">Nickname</label>
+          <label className="block text-left text-sm font-medium mb-1">
+            Nickname
+          </label>
           <div className="flex flex-col items-center">
             <div>{user?.name}</div>
             <div>{user?.email}</div>
           </div>
-
         </div>
       </div>
     </div>

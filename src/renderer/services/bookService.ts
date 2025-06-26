@@ -56,7 +56,10 @@ const bookService = {
    */
   getBooksInLibrary: async (filter?: string) => {
     const body: BookFilter = { Filter: filter ?? '' };
-    const res = await apiClient.post<LibraryApiBook[]>('book-in-library-by-user', body);
+    const res = await apiClient.post<LibraryApiBook[]>(
+      'book-in-library-by-user',
+      body,
+    );
 
     if (res.success && res.data) {
       const mapped: Book[] = res.data.map((raw) => ({
@@ -109,7 +112,7 @@ const bookService = {
    */
   addFavoriteBooks: async (bookIds: number[]) => {
     const request: FavoriteBookRequest = {
-      bookIdLists: bookIds.map(bookId => ({ bookId }))
+      bookIdLists: bookIds.map((bookId) => ({ bookId })),
     };
     return apiClient.post<void>('add-favorite-book', request);
   },
@@ -149,10 +152,10 @@ const bookService = {
   updateReadPercent: async (bookId: number, readPage: number) => {
     const request: ReadPercentRequest = {
       BookId: bookId,
-      ReadPage: readPage
+      ReadPage: readPage,
     };
     return apiClient.put<void>('read-percent', request);
-  }
+  },
 };
 
 export default bookService;

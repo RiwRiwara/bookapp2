@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { authService, apiClient } from '../services';
 import { useUser } from './UserContext';
 
@@ -6,11 +12,21 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (userId: string, password: string) => Promise<boolean>;
-  register: (data: import('../services/authService').RegisterRequest) => Promise<boolean>;
-  verifyEmail: (data: import('../services/authService').VerifyEmailRequest) => Promise<boolean>;
-  forgotPassword: (data: import('../services/authService').ForgotPasswordRequest) => Promise<boolean>;
-  newPassword: (data: import('../services/authService').NewPasswordRequest) => Promise<boolean>;
-  changePassword: (data: import('../services/authService').ChangePasswordRequest) => Promise<boolean>;
+  register: (
+    data: import('../services/authService').RegisterRequest,
+  ) => Promise<boolean>;
+  verifyEmail: (
+    data: import('../services/authService').VerifyEmailRequest,
+  ) => Promise<boolean>;
+  forgotPassword: (
+    data: import('../services/authService').ForgotPasswordRequest,
+  ) => Promise<boolean>;
+  newPassword: (
+    data: import('../services/authService').NewPasswordRequest,
+  ) => Promise<boolean>;
+  changePassword: (
+    data: import('../services/authService').ChangePasswordRequest,
+  ) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -26,7 +42,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const { setUser } = useUser();
@@ -59,29 +75,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
-  const register = async (data: import('../services/authService').RegisterRequest) => {
+  const register = async (
+    data: import('../services/authService').RegisterRequest,
+  ) => {
     setLoading(true);
     const res = await authService.register(data);
     setLoading(false);
     return res.success;
   };
 
-  const verifyEmail = async (data: import('../services/authService').VerifyEmailRequest) => {
+  const verifyEmail = async (
+    data: import('../services/authService').VerifyEmailRequest,
+  ) => {
     const res = await authService.verifyEmail(data);
     return res.success;
   };
 
-  const forgotPassword = async (data: import('../services/authService').ForgotPasswordRequest) => {
+  const forgotPassword = async (
+    data: import('../services/authService').ForgotPasswordRequest,
+  ) => {
     const res = await authService.forgotPassword(data);
     return res.success;
   };
 
-  const newPassword = async (data: import('../services/authService').NewPasswordRequest) => {
+  const newPassword = async (
+    data: import('../services/authService').NewPasswordRequest,
+  ) => {
     const res = await authService.newPassword(data);
     return res.success;
   };
 
-  const changePassword = async (data: import('../services/authService').ChangePasswordRequest) => {
+  const changePassword = async (
+    data: import('../services/authService').ChangePasswordRequest,
+  ) => {
     const res = await authService.changePassword(data);
     return res.success;
   };
@@ -92,10 +118,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, login, register, verifyEmail, forgotPassword, newPassword, changePassword, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        loading,
+        login,
+        register,
+        verifyEmail,
+        forgotPassword,
+        newPassword,
+        changePassword,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 export const useAuth = () => useContext(AuthContext);

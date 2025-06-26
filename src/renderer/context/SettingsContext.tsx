@@ -21,7 +21,11 @@ const SettingsContext = createContext<{
 
 export const useSettings = () => useContext(SettingsContext);
 
-export const SettingsProvider = ({ children }: { children: ReactNode }) => {
+export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<ReaderSettings>(mockSettings);
-  return <SettingsContext.Provider value={{ settings, setSettings }}>{children}</SettingsContext.Provider>;
-};
+  return (
+    <SettingsContext.Provider value={{ settings, setSettings }}>
+      {children}
+    </SettingsContext.Provider>
+  );
+}

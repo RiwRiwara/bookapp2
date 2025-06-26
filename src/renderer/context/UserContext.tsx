@@ -1,6 +1,7 @@
-import * as React from 'react'
-const { createContext, useContext, useState } = React
-type ReactNode = React.ReactNode
+import * as React from 'react';
+
+const { createContext, useContext, useState } = React;
+type ReactNode = React.ReactNode;
 
 export interface User {
   id: string;
@@ -8,7 +9,6 @@ export interface User {
   avatar: string;
   email: string;
 }
-
 
 const UserContext = createContext<{
   user: User | null;
@@ -20,7 +20,7 @@ const UserContext = createContext<{
 
 export const useUser = () => useContext(UserContext);
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
+export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   return (
@@ -28,4 +28,4 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </UserContext.Provider>
   );
-};
+}

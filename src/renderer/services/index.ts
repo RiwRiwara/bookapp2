@@ -3,9 +3,4 @@ import apiClient from './api';
 import authService from './authService';
 import bookService from './bookService';
 
-
-export {
-  apiClient,
-  authService,
-  bookService
-};
+export { apiClient, authService, bookService };

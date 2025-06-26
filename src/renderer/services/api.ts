@@ -2,8 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Base API configuration
 // Determine API base URL from environment variables, with sensible fallbacks
-const BASE_URL: string = "https://booksiam.com"
-
+const BASE_URL: string = 'https://booksiam.com';
 
 // No prefix needed for backend endpoints
 const API_PREFIX = '';
@@ -18,7 +17,9 @@ interface ApiResponse<T> {
 // API client class
 class ApiClient {
   private client: AxiosInstance;
+
   private token: string | null = null;
+
   private userId: string | null = null;
 
   constructor() {
@@ -35,33 +36,36 @@ class ApiClient {
       (config) => {
         // Add authorization token if it exists
         if (this.token) {
-          config.headers['Authorization'] = `Bearer ${this.token}`;
+          config.headers.Authorization = `Bearer ${this.token}`;
         }
-        
+
         // Add UserId header if it exists
         if (this.userId && config.headers) {
-          config.headers['UserId'] = this.userId;
+          config.headers.UserId = this.userId;
         }
 
-
-        
         return config;
       },
       (error) => {
         return Promise.reject(error);
-      }
+      },
     );
 
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => {
-        console.log('[API Response]', response.status, response.config.url, response.data);
+        console.log(
+          '[API Response]',
+          response.status,
+          response.config.url,
+          response.data,
+        );
         return response;
       },
       (error) => {
         console.error('API Error:', error.response?.data || error.message);
         return Promise.reject(error);
-      }
+      },
     );
 
     // Load authentication data immediately so that each request has proper headers
@@ -95,7 +99,9 @@ class ApiClient {
   }
 
   // Generic request method
-  private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  private async request<T>(
+    config: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
       const response: AxiosResponse<T> = await this.client.request<T>(config);
       return {
@@ -105,7 +111,10 @@ class ApiClient {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Unknown error occurred',
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          'Unknown error occurred',
       };
     }
   }
