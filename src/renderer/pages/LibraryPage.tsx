@@ -160,7 +160,7 @@ const LibraryPage: React.FC = () => {
       <h2 className="text-2xl font-bold md:mb-0 text-[#017BD9] mb-4">
         ชั้นหนังสือ{' '}
       </h2>
-      <hr className="my-4" />
+      <hr className="my-4 border-gray-200" />
       {/* Unread Section */}
       {unreadBooks.length > 0 && (
         <div className="mb-8 mt-4">

@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Base API configuration
 // Determine API base URL from environment variables, with sensible fallbacks
+// const BASE_URL: string = 'https://booksiam.com';
 const BASE_URL: string = 'https://booksiam.com';
 
 // No prefix needed for backend endpoints
@@ -123,7 +124,7 @@ class ApiClient {
   public async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
     return this.request<T>({
       method: 'GET',
-      url: url.startsWith('http') ? url : `${API_PREFIX}/${url}`,
+      url: url.startsWith('http') ? url : API_PREFIX ? `${API_PREFIX}/${url}` : url,
       params,
     });
   }
@@ -132,7 +133,7 @@ class ApiClient {
   public async post<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>({
       method: 'POST',
-      url: url.startsWith('http') ? url : `${API_PREFIX}/${url}`,
+      url: url.startsWith('http') ? url : API_PREFIX ? `${API_PREFIX}/${url}` : url,
       data,
     });
   }
@@ -141,7 +142,7 @@ class ApiClient {
   public async put<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>({
       method: 'PUT',
-      url: url.startsWith('http') ? url : `${API_PREFIX}/${url}`,
+      url: url.startsWith('http') ? url : API_PREFIX ? `${API_PREFIX}/${url}` : url,
       data,
     });
   }
@@ -150,7 +151,7 @@ class ApiClient {
   public async delete<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>({
       method: 'DELETE',
-      url: url.startsWith('http') ? url : `${API_PREFIX}/${url}`,
+      url: url.startsWith('http') ? url : API_PREFIX ? `${API_PREFIX}/${url}` : url,
       data,
     });
   }

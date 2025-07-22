@@ -61,7 +61,7 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
   const [showOverview, setShowOverview] = useState<boolean>(false);
   const [showBookmarks, setShowBookmarks] = useState<boolean>(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [zoom, setZoom] = useState<number>(1.5);
+  const [zoom, setZoom] = useState<number>(1.0);
   const [thumbnails, setThumbnails] = useState<{ [key: number]: string }>({});
   const [showFloatingSettings, setShowFloatingSettings] =
     useState<boolean>(false);
@@ -110,9 +110,33 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await bookService.getBookDetails(book.bookId);
-        if (response.success && response.data?.bookUrl) {
-          const remoteUrl = response.data.bookUrl;
+
+        // Get auth data from localStorage
+        const authToken = localStorage.getItem('auth_token');
+        const userId = localStorage.getItem('user_id');
+
+        console.log('[ReaderPage] Book ID:', book.bookId);
+        console.log('[ReaderPage] Auth token:', authToken);
+        console.log('[ReaderPage] User ID:', userId);
+        // Direct fetch to API
+        const apiResponse = await fetch(`https://booksiam.com/book-detail/${book.bookId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+            'UserId': userId || '',
+          },
+        });
+
+        if (!apiResponse.ok) {
+          throw new Error(`API request failed: ${apiResponse.status}`);
+        }
+
+        const data = await apiResponse.json();
+        console.log('[ReaderPage] Book details:', data);
+
+        if (data?.bookUrl) {
+          const remoteUrl = data.bookUrl;
           try {
             const pdfRes = await fetch(remoteUrl);
             if (!pdfRes.ok) throw new Error('Failed to fetch PDF');
@@ -132,11 +156,11 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
             setNumPages(loadedPdf.numPages);
           }
         } else {
-          setError(response.error || 'No book URL found for this book');
+          setError('No book URL found for this book');
         }
       } catch (err) {
         console.error('Error fetching book details:', err);
-        setError('Error loading book');
+        setError('Book not found');
       } finally {
         setLoading(false);
       }
@@ -174,10 +198,10 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
           );
         } else {
           // Double-page mode: show two pages side by side
-          let leftPageNum = page % 2 === 0 ? page : page - 1; // Ensure left page is even
-          let rightPageNum = leftPageNum + 1;
-          if (leftPageNum < 1) leftPageNum = 1;
-          if (rightPageNum > pdf.numPages) rightPageNum = 0;
+          const leftPageNum = page;
+          const rightPageNum = page + 1;
+
+          if (leftPageNum > pdf.numPages) return;
 
           const leftPage = await pdf.getPage(leftPageNum);
           const leftViewport = leftPage.getViewport({ scale: zoom });
@@ -186,7 +210,7 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
           const pageGap = 10;
           const canvasHeight = leftViewport.height;
           const totalWidth =
-            rightPageNum > 0
+            rightPageNum <= pdf.numPages
               ? leftViewport.width * 2 + pageGap
               : leftViewport.width;
 
@@ -197,34 +221,45 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
           canvas.height = canvasHeight * scaleFactor;
           canvas.width = totalWidth * scaleFactor;
 
-          // Render left page
+          // Create a temporary canvas for each page to avoid transform issues
+          const tempCanvas = document.createElement('canvas');
+          const tempContext = tempCanvas.getContext('2d')!;
+
+          // Render left page on temp canvas first
           const scaledLeftViewport = leftPage.getViewport({
             scale: zoom * scaleFactor,
           });
+          tempCanvas.width = scaledLeftViewport.width;
+          tempCanvas.height = scaledLeftViewport.height;
+
           await leftPage.render({
-            canvasContext: context,
+            canvasContext: tempContext,
             viewport: scaledLeftViewport,
-            transform: [scaleFactor, 0, 0, scaleFactor, 0, 0],
           }).promise;
 
+          // Draw left page on main canvas
+          context.drawImage(tempCanvas, 0, 0);
+
           // Render right page if available
-          if (rightPageNum > 0 && rightPageNum <= pdf.numPages) {
+          if (rightPageNum <= pdf.numPages) {
             const rightPage = await pdf.getPage(rightPageNum);
             const scaledRightViewport = rightPage.getViewport({
               scale: zoom * scaleFactor,
             });
+
+            // Clear and resize temp canvas for right page
+            tempCanvas.width = scaledRightViewport.width;
+            tempCanvas.height = scaledRightViewport.height;
+            tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+
             await rightPage.render({
-              canvasContext: context,
+              canvasContext: tempContext,
               viewport: scaledRightViewport,
-              transform: [
-                scaleFactor,
-                0,
-                0,
-                scaleFactor,
-                scaledLeftViewport.width + pageGap * scaleFactor,
-                0,
-              ],
             }).promise;
+
+            // Draw right page on main canvas with offset
+            const rightPageX = scaledLeftViewport.width + pageGap * scaleFactor;
+            context.drawImage(tempCanvas, rightPageX, 0);
             console.log(
               `[ReaderPage] Rendered double page ${leftPageNum}-${rightPageNum} at zoom ${zoom}`,
             );
@@ -311,7 +346,7 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
   // Resize handler
   useEffect(() => {
     const handleResize = () => {
-      setZoom(window.innerWidth < 768 ? 1 : 1.5);
+      setZoom(window.innerWidth < 768 ? 0.8 : 1.0);
     };
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -525,52 +560,114 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
       >
         <div className="flex flex-col items-center justify-center w-full h-full">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-xl">กำลังโหลดหนังสือ...</div>
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <div className="text-lg text-gray-600">Loading book...</div>
+              <div className="text-sm text-gray-400">Please wait while we prepare your reading experience</div>
             </div>
           ) : error || !bookUrl ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-xl text-red-500">
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="text-6xl text-red-300">📚</div>
+              <div className="text-xl text-red-500 text-center max-w-md">
                 {error || 'No book URL provided'}
               </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           ) : (
             <div className="flex flex-col items-center w-full overflow-auto pb-4">
-              <canvas ref={canvasRef} className="shadow-lg" />
+              <div className="relative">
+                <canvas
+                  ref={canvasRef}
+                  className="shadow-2xl rounded-lg border border-gray-200"
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
+                {/* Page loading overlay */}
+                {pdf && (
+                  <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                    Page {page} of {numPages}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {/* Navigation and Progress */}
-        <div className="w-full mt-6">
-          <div className="w-full h-1 bg-gray-200 rounded-full mb-4">
+        <div className="w-full mt-6 bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+          {/* Progress bar with percentage */}
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-gray-500">Progress</span>
+            <span className="text-xs font-medium text-blue-600">{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full mb-6 cursor-pointer"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const clickX = e.clientX - rect.left;
+              const percentage = clickX / rect.width;
+              const targetPage = Math.max(1, Math.min(numPages, Math.ceil(percentage * numPages)));
+              setPage(targetPage);
+            }}>
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-300 shadow-sm"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex items-center justify-between w-full">
-            <button
-              type="button"
-              onClick={goPrev}
-              disabled={page <= 1}
-              className="p-2 rounded bg-blue-100 hover:bg-blue-200 disabled:opacity-50"
-            >
-              <FiChevronLeft />
-            </button>
-            <div className="text-sm text-gray-500">
-              {currentPage} of {totalPages}
+
+          {/* Navigation controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={goPrev}
+                disabled={page <= 1}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Previous page (←)"
+              >
+                <FiChevronLeft className="w-4 h-4" />
+                <span className="text-sm font-medium">Prev</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={numPages ? page >= numPages - (singlePage ? 0 : 1) : true}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Next page (→)"
+              >
+                <span className="text-sm font-medium">Next</span>
+                <FiChevronRight className="w-4 h-4" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={
-                numPages ? page >= numPages - (singlePage ? 0 : 1) : true
-              }
-              className="p-2 rounded bg-blue-100 hover:bg-blue-200 disabled:opacity-50"
-            >
-              <FiChevronRight />
-            </button>
+
+            {/* Page info and quick jump */}
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-gray-600">
+                Page <span className="font-medium text-gray-800">{currentPage}</span> of <span className="font-medium text-gray-800">{totalPages}</span>
+              </div>
+
+              {/* Quick jump input */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max={numPages}
+                  value={page}
+                  onChange={(e) => {
+                    const newPage = parseInt(e.target.value);
+                    if (newPage >= 1 && newPage <= numPages) {
+                      setPage(newPage);
+                    }
+                  }}
+                  className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  title="Jump to page"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

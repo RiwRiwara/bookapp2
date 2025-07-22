@@ -3,13 +3,14 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import logo from '../../../assets/logo.png';
 import eyeoff from '../../../assets/eyeoff.png';
+import bgimage from '../../../assets/bgimage.png';
 
 const LoginPage: React.FC<{ onNavigate?: (page: string) => void }> = ({
   onNavigate,
 }) => {
   const { login, loading } = useAuth();
-  const [userId, setUserId] = useState('kwanchai.sen');
-  const [password, setPassword] = useState('12345');
+  const [userId, setUserId] = useState('1');
+  const [password, setPassword] = useState('1');
 
   const handleSubmit = async () => {
     const success = await login(userId, password);
@@ -21,7 +22,7 @@ const LoginPage: React.FC<{ onNavigate?: (page: string) => void }> = ({
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen background-login">
+    <div className="flex items-center justify-center min-h-screen" style={{ backgroundImage: `url(${bgimage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 flex flex-col items-center">
         <img src={logo} alt="BookSiam Logo" className="w-24 mb-4" />
         <h2 className="text-xl font-medium mb-2">Welcome Back !</h2>
@@ -34,7 +35,7 @@ const LoginPage: React.FC<{ onNavigate?: (page: string) => void }> = ({
           </label>
           <input
             type="text"
-            className="w-full px-3 py-2 border rounded mb-4 bg-white"
+            className="w-full px-3 py-2 border border-gray-300 rounded mb-4 bg-white"
             placeholder="username"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
@@ -45,7 +46,7 @@ const LoginPage: React.FC<{ onNavigate?: (page: string) => void }> = ({
           <div className="relative mb-4">
             <input
               type="password"
-              className="w-full px-3 py-2 border rounded bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded bg-white"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

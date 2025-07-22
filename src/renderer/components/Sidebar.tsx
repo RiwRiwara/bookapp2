@@ -7,6 +7,7 @@ import menuicon from '../../../assets/menuicon.png';
 import bookicon from '../../../assets/bookicon.png';
 import hearticon from '../../../assets/hearticon.png';
 import cloudicon from '../../../assets/cloudicon.png';
+import logo from '../../../assets/logo.png';
 
 interface SidebarProps {
   currentPage: string;
@@ -20,15 +21,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
     <div className="h-full w-64 bg-white  flex flex-col justify-between ">
       <div>
         <div className="flex flex-col items-center pt-8 pb-4">
-          <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-full  flex flex-col items-center justify-center">
-            <img src={menuicon} alt="เมนูหลัก" className="" />
+          <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-full  flex flex-col items-center justify-center ">
+            <img src={logo} alt="เมนูหลัก" className="" style={{ width: '100px', height: '100px' }} />
           </div>
         </div>
         <div className="border-t border-gray-100 my-3" />
         <nav className="flex-1 px-2">
-          <div className="text-xs text-gray-400 uppercase mb-2 pl-2">
-            เมนูหลัก
-          </div>
           <ul className="space-y-1">
             <li>
               <button
