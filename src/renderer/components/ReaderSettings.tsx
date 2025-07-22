@@ -44,7 +44,7 @@ const ReaderSettings: React.FC<ReaderSettingsProps> = ({
   setZoom,
 }) => {
   return (
-    <div className="bg-white shadow-md border-b p-4 flex flex-wrap gap-6 justify-center items-center">
+    <div className="bg-white shadow-md border-b border-gray-200 p-4 flex flex-wrap gap-6 justify-center items-center">
       {/* Font size */}
       <div
         className="flex items-center gap-2 disabled"
