@@ -14,7 +14,7 @@ import { UserProvider } from './context/UserContext';
 import './App.css';
 
 const InnerApp: React.FC = () => {
-  const [page, setPage] = useState('library');
+  const [page, setPage] = useState('');
   const [authPage, setAuthPage] = useState<
     'login' | 'register' | 'forgot' | 'reset'
   >('login');

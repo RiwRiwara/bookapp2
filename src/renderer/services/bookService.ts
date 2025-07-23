@@ -18,6 +18,9 @@ export interface Book {
   totalPages?: number;
   currentPage?: number;
   readPercent?: number;
+
+  // Favorite status
+  isFavorite?: boolean;
 }
 
 export interface BookFilter {

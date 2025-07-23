@@ -15,16 +15,72 @@ const LibraryPage: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [readingBook, setReadingBook] = useState<Book | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
+  const [favoriteBooks, setFavoriteBooks] = useState<Book[]>([]);
   // Placeholder remove; underscore to avoid unused param lint
   const { user } = useUser();
 
   useEffect(() => {
-    const fetch = async () => {
-      const res = await bookService.getBooksInLibrary();
-      if (res.success && res.data) setBooks(res.data);
+    const fetchData = async () => {
+      // Fetch library books
+      const booksRes = await bookService.getBooksInLibrary();
+      if (booksRes.success && booksRes.data) {
+        // Fetch favorite books
+        const favoritesRes = await bookService.getFavoriteBooks();
+        const favoriteBookIds = favoritesRes.success && favoritesRes.data 
+          ? favoritesRes.data.map(book => book.bookId) 
+          : [];
+        
+        // Mark books as favorite
+        const booksWithFavorites = booksRes.data.map((book: Book) => ({
+          ...book,
+          isFavorite: favoriteBookIds.includes(book.bookId)
+        }));
+        
+        setBooks(booksWithFavorites);
+        if (favoritesRes.success && favoritesRes.data) {
+          setFavoriteBooks(favoritesRes.data);
+        }
+      }
     };
-    fetch();
+    fetchData();
   }, []);
+
+  // Toggle favorite status for a book
+  const toggleFavorite = async (book: Book, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent card click
+    
+    try {
+      if (book.isFavorite) {
+        // Remove from favorites
+        const res = await bookService.removeFavoriteBook(book.bookId);
+        if (res.success) {
+          // Update local state
+          setBooks(prevBooks => 
+            prevBooks.map(b => 
+              b.bookId === book.bookId ? { ...b, isFavorite: false } : b
+            )
+          );
+          setFavoriteBooks(prevFavorites => 
+            prevFavorites.filter(b => b.bookId !== book.bookId)
+          );
+        }
+      } else {
+        // Add to favorites
+        const res = await bookService.addFavoriteBooks([book.bookId]);
+        if (res.success) {
+          // Update local state
+          setBooks(prevBooks => 
+            prevBooks.map(b => 
+              b.bookId === book.bookId ? { ...b, isFavorite: true } : b
+            )
+          );
+          setFavoriteBooks(prevFavorites => [...prevFavorites, book]);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
 
   if (readingBook) {
     return (
@@ -78,7 +134,12 @@ const LibraryPage: React.FC = () => {
       >
         {/* Heart icon in top-right corner */}
         <div className="absolute top-2 right-2 z-10">
-          <FaHeart className="text-blue-500" />
+          <FaHeart 
+            onClick={(e) => toggleFavorite(book, e)}
+            className={`cursor-pointer transition-colors duration-200 hover:scale-110 transform ${
+              book.isFavorite ? 'text-red-500' : 'text-gray-300 hover:text-red-400'
+            }`}
+          />
         </div>
         {/* Book cover */}
         <div
