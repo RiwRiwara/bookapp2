@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, screen, desktopCapturer } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -30,6 +30,78 @@ ipcMain.on('ipc-example', async (event, arg) => {
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
 });
+
+// Handle logout request from renderer
+ipcMain.on('logout-user', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('force-logout');
+  }
+});
+
+// Screenshot protection monitoring
+let isMonitoring = false;
+let monitoringInterval: NodeJS.Timeout | null = null;
+let lastScreenshotCheck = 0;
+
+ipcMain.on('start-protection', () => {
+  if (!isMonitoring) {
+    isMonitoring = true;
+    startScreenshotProtection();
+  }
+});
+
+ipcMain.on('stop-protection', () => {
+  if (isMonitoring) {
+    isMonitoring = false;
+    if (monitoringInterval) {
+      clearInterval(monitoringInterval);
+      monitoringInterval = null;
+    }
+  }
+});
+
+function startScreenshotProtection() {
+  // Monitor for screen recording/capture attempts
+  monitoringInterval = setInterval(async () => {
+    try {
+      // Check if screen capture is active by attempting to get desktop sources
+      const sources = await desktopCapturer.getSources({ 
+        types: ['screen'], 
+        thumbnailSize: { width: 1, height: 1 } 
+      });
+      
+      // On macOS, check if screen recording permission is granted
+      if (process.platform === 'darwin') {
+        const displays = screen.getAllDisplays();
+        if (displays.length > 0) {
+          // If we can get display info but sources is empty or restricted, 
+          // it might indicate screen recording is active
+          if (sources.length === 0) {
+            mainWindow?.webContents.send('screenshot-detected');
+          }
+        }
+      }
+      
+      // Additional check: Monitor for rapid screen capture attempts
+      // This is a heuristic approach as direct detection is limited
+      if (sources.length > 0) {
+        const currentTime = Date.now();
+        if (lastScreenshotCheck === 0) {
+          lastScreenshotCheck = currentTime;
+        } else {
+          const timeDiff = currentTime - lastScreenshotCheck;
+          if (timeDiff < 100) { // Very rapid successive calls might indicate recording
+            mainWindow?.webContents.send('screenshot-detected');
+          }
+          lastScreenshotCheck = currentTime;
+        }
+      }
+    } catch (error) {
+      // If there's an error accessing desktop sources, it might indicate protection is active
+      console.log('Desktop capture error (this might be normal):', error);
+    }
+  }, 1000); // Check every second
+}
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -79,10 +151,17 @@ const createWindow = async () => {
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
       webSecurity: false, // Disabled for CORS testing – do not enable in production
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+
+  // Enable content protection to prevent screenshots and screen recording
+  if (process.platform === 'darwin' || process.platform === 'win32') {
+    mainWindow.setContentProtection(true);
+  }
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
