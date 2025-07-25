@@ -12,6 +12,7 @@ const MyListPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [readingBook, setReadingBook] = useState<Book | null>(null);
+  const [removingFavorite, setRemovingFavorite] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -29,6 +30,26 @@ const MyListPage: React.FC = () => {
 
     fetchFavorites();
   }, []);
+
+  const handleRemoveFavorite = async (bookId: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent card click
+    
+    try {
+      setRemovingFavorite(bookId);
+      const result = await bookService.removeFavoriteBook(bookId);
+      
+      if (result.success) {
+        // Remove the book from the local state
+        setBooks(prevBooks => prevBooks.filter(book => book.bookId !== bookId));
+      } else {
+        console.error('Failed to remove favorite:', result.error);
+      }
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    } finally {
+      setRemovingFavorite(null);
+    }
+  };
 
   // If currently reading
   if (readingBook) {
@@ -65,7 +86,16 @@ const MyListPage: React.FC = () => {
       >
         {/* Heart icon in top-right corner */}
         <div className="absolute top-2 right-2 z-10">
-          <FaHeart className="text-blue-500" />
+          <button
+            onClick={(e) => handleRemoveFavorite(book.bookId, e)}
+            disabled={removingFavorite === book.bookId}
+            className="p-1 rounded-full bg-white/80 hover:bg-white transition-all duration-200 hover:scale-110 disabled:opacity-50"
+            title="ลบออกจากรายการโปรด"
+          >
+            <FaHeart 
+              className={`text-red-500 ${removingFavorite === book.bookId ? 'animate-pulse' : ''}`} 
+            />
+          </button>
         </div>
 
         {/* Book cover image that fills the card */}

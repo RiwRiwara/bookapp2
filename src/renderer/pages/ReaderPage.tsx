@@ -23,7 +23,7 @@ const addPDFProtection = () => {
   // Disable text selection on PDF content
   document.body.style.userSelect = 'none';
   document.body.style.webkitUserSelect = 'none';
-  
+
   // Add watermark overlay
   const watermark = document.createElement('div');
   watermark.id = 'pdf-watermark';
@@ -52,7 +52,7 @@ const addPDFProtection = () => {
     transform: rotate(-45deg);
   `;
   watermark.textContent = 'PROTECTED CONTENT';
-  
+
   if (!document.getElementById('pdf-watermark')) {
     document.body.appendChild(watermark);
   }
@@ -61,7 +61,7 @@ const addPDFProtection = () => {
 const removePDFProtection = () => {
   document.body.style.userSelect = '';
   document.body.style.webkitUserSelect = '';
-  
+
   const watermark = document.getElementById('pdf-watermark');
   if (watermark) {
     watermark.remove();
@@ -225,8 +225,7 @@ const ReaderPage: React.FC<ReaderPageProps> = ({ book, onBack }) => {
 
   // Enable PDF protection
   useEffect(() => {
-    addPDFProtection();
-    
+
     return () => {
       removePDFProtection();
     };
