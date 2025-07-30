@@ -145,14 +145,20 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
+    minWidth: 800,
+    minHeight: 600,
     icon: getAssetPath('icon.png'),
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    backgroundColor: '#ffffff', // Prevent dark screen
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
-      webSecurity: false, // Disabled for CORS testing – do not enable in production
+      webSecurity: true, // Enable web security for production
       nodeIntegration: false,
       contextIsolation: true,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
     },
   });
 
@@ -171,12 +177,22 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       mainWindow.show();
+      mainWindow.focus();
     }
   });
 
+  // Handle window-all-closed event
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  // Prevent new window creation
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+
 
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
@@ -204,14 +220,23 @@ app.on('window-all-closed', () => {
   }
 });
 
-app
-  .whenReady()
+app.on('activate', () => {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (mainWindow === null) createWindow();
+});
+
+// Handle app ready event
+app.whenReady()
   .then(() => {
     createWindow();
-    app.on('activate', () => {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
-      if (mainWindow === null) createWindow();
+    
+    // Security: Prevent new window creation from renderer
+    app.on('web-contents-created', (event, contents) => {
+      contents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: 'deny' };
+      });
     });
   })
   .catch(console.log);
